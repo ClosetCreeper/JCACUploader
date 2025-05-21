@@ -27,20 +27,27 @@
       document.getElementById("status").textContent = "Uploading...";
 
       try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData
-        });
-        const result = await res.json();
-        if (result.success) {
-          document.getElementById("status").textContent = `Upload successful! File ID: ${result.fileId}`;
-        } else {
-          document.getElementById("status").textContent = `Upload failed: ${result.error}`;
-        }
-      } catch (err) {
-        console.error(err);
-        document.getElementById("status").textContent = "Upload failed!";
-      }
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  let result;
+  try {
+    result = await res.json(); // This could still fail
+  } catch (jsonErr) {
+    throw new Error("Server response was not valid JSON");
+  }
+
+  if (result.success) {
+    document.getElementById("status").textContent = `Upload successful! File ID: ${result.fileId}`;
+  } else {
+    document.getElementById("status").textContent = `Upload failed: ${result.error}`;
+  }
+} catch (err) {
+  console.error(err);
+  document.getElementById("status").textContent = "Upload failed!";
+}
     });
   </script>
 </body>

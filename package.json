@@ -2,7 +2,7 @@
   "name": "vercel-drive-uploader",
   "version": "1.0.0",
   "dependencies": {
-    "formidable": "^3.5.1",
+    "formidable": "^3.6.0",
     "googleapis": "^118.0.0"
   }
 }

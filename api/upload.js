@@ -1,7 +1,7 @@
 import formidable from "formidable";
 import { google } from "googleapis";
 
-// Disable default bodyParser
+// Disable default bodyParser for file upload
 export const config = {
   api: {
     bodyParser: false,
@@ -10,50 +10,53 @@ export const config = {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    res.status(405).send("Method Not Allowed");
-    return;
+    return res.status(405).json({ success: false, error: "Method Not Allowed" });
   }
 
   const form = new formidable.IncomingForm({ multiples: false });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      console.error("Formidable error:", err);
-      res.status(500).send("Form parse error");
-      return;
+      console.error("Form parse error:", err);
+      return res.status(500).json({ success: false, error: "Form parse error" });
     }
 
     const file = files.file;
-    const fs = await import("fs/promises");
-    const buffer = await fs.readFile(file.filepath);
-
-    const auth = new google.auth.OAuth2(
-      process.env.CLIENT_ID,
-      process.env.CLIENT_SECRET
-    );
-
-    auth.setCredentials({
-      refresh_token: process.env.REFRESH_TOKEN,
-    });
-
-    const drive = google.drive({ version: "v3", auth });
+    if (!file) {
+      return res.status(400).json({ success: false, error: "No file uploaded" });
+    }
 
     try {
+      const fs = await import("fs/promises");
+      const buffer = await fs.readFile(file.filepath);
+
+      const auth = new google.auth.OAuth2(
+        process.env.CLIENT_ID,
+        process.env.CLIENT_SECRET
+      );
+
+      auth.setCredentials({
+        refresh_token: process.env.REFRESH_TOKEN,
+      });
+
+      const drive = google.drive({ version: "v3", auth });
+
       const response = await drive.files.create({
         requestBody: {
           name: file.originalFilename,
           parents: [process.env.FOLDER_ID],
         },
         media: {
-          mimeType: file.mimetype,
+          mimeType: file.mimetype || "application/octet-stream",
           body: Buffer.from(buffer),
         },
       });
 
-      res.status(200).json({ success: true, fileId: response.data.id });
+      return res.status(200).json({ success: true, fileId: response.data.id });
+
     } catch (error) {
-      console.error("Google Drive upload error:", error.message);
-      res.status(500).json({ success: false, error: error.message });
+      console.error("Upload error:", error);
+      return res.status(500).json({ success: false, error: error.message });
     }
   });
 }

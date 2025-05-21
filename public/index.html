@@ -15,7 +15,6 @@
     <button type="submit">Upload</button>
   </form>
   <div id="status"></div>
-
   <script>
   document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("uploadForm").addEventListener("submit", async function (e) {
@@ -42,7 +41,7 @@
         } catch (jsonErr) {
           const text = await res.text();
           console.error("Invalid JSON:", text);
-          document.getElementById("status").textContent = `Upload failed: Invalid server response.`;
+          document.getElementById("status").textContent = "Upload failed: Invalid server response.";
           return;
         }
 
@@ -53,7 +52,7 @@
         }
       } catch (err) {
         console.error("Network or server error:", err);
-        document.getElementById("status").textContent = "Upload failed!";
+        document.getElementById("status").textContent = "Upload failed due to network/server error!";
       }
     });
   });

@@ -17,37 +17,45 @@
   <div id="status"></div>
 
   <script>
-  document.getElementById("uploadForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-    const fileInput = document.getElementById("file");
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData
-      });
-
-      let result;
-      try {
-        result = await res.json(); // If not JSON, this will throw
-      } catch (jsonErr) {
-        const text = await res.text();
-        console.error("Invalid JSON:", text);
-        document.getElementById("status").textContent = `Upload failed: Invalid server response.`;
+      const fileInput = document.getElementById("file");
+      if (!fileInput || !fileInput.files.length) {
+        document.getElementById("status").textContent = "No file selected.";
         return;
       }
 
-      if (result.success) {
-        document.getElementById("status").textContent = `Upload successful! File ID: ${result.fileId}`;
-      } else {
-        document.getElementById("status").textContent = `Upload failed: ${result.error}`;
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        let result;
+        try {
+          result = await res.json();
+        } catch (jsonErr) {
+          const text = await res.text();
+          console.error("Invalid JSON:", text);
+          document.getElementById("status").textContent = `Upload failed: Invalid server response.`;
+          return;
+        }
+
+        if (result.success) {
+          document.getElementById("status").textContent = `Upload successful! File ID: ${result.fileId}`;
+        } else {
+          document.getElementById("status").textContent = `Upload failed: ${result.error}`;
+        }
+      } catch (err) {
+        console.error("Network or server error:", err);
+        document.getElementById("status").textContent = "Upload failed!";
       }
-    } catch (err) {
-      console.error("Network or server error:", err);
-      document.getElementById("status").textContent = "Upload failed!";
-    }
+    });
   });
 </script>
 </body>

@@ -52,36 +52,12 @@
   </form>
 
   <script>
-    const form = document.getElementById('uploadForm');
-    const statusText = document.getElementById('status');
+    document.querySelector("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fileInput = document.getElementById('fileInput');
-      const file = fileInput.files[0];
-      if (!file) return alert("Please select a file.");
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      statusText.textContent = "Uploading...";
-
-      try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          statusText.textContent = "✅ Uploaded successfully!";
-        } else {
-          throw new Error(data.message || "Upload failed");
-        }
-      } catch (err) {
-        statusText.textContent = `❌ Error: ${err.message}`;
-      }
-    });
+  const formData = new FormData();
+  const file = document.querySelector("#fileInput").files[0];
+  formData.append("file", file);
   </script>
 </body>
 </html>

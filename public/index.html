@@ -17,37 +17,38 @@
   <div id="status"></div>
 
   <script>
-    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
+  document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const fileInput = document.getElementById("file");
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
 
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      let result;
       try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData
-        });
-
+        result = await res.json(); // If not JSON, this will throw
+      } catch (jsonErr) {
         const text = await res.text();
-        let result;
-
-        try {
-          result = JSON.parse(text);
-        } catch (jsonErr) {
-          console.error("Invalid JSON:", text);
-          document.getElementById("status").textContent = "Upload failed: Invalid server response.";
-          return;
-        }
-
-        if (result.success) {
-          document.getElementById("status").textContent = `✅ Upload successful! File ID: ${result.fileId}`;
-        } else {
-          document.getElementById("status").textContent = `❌ Upload failed: ${result.error}`;
-        }
-      } catch (err) {
-        console.error("Error:", err);
-        document.getElementById("status").textContent = "❌ Upload failed due to network error.";
+        console.error("Invalid JSON:", text);
+        document.getElementById("status").textContent = `Upload failed: Invalid server response.`;
+        return;
       }
-    });
-  </script>
+
+      if (result.success) {
+        document.getElementById("status").textContent = `Upload successful! File ID: ${result.fileId}`;
+      } else {
+        document.getElementById("status").textContent = `Upload failed: ${result.error}`;
+      }
+    } catch (err) {
+      console.error("Network or server error:", err);
+      document.getElementById("status").textContent = "Upload failed!";
+    }
+  });
+</script>
 </body>
 </html>

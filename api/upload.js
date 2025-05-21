@@ -2,7 +2,6 @@ import formidable from "formidable";
 import { google } from "googleapis";
 import fs from "fs/promises";
 
-// Disable Next.js bodyParser
 export const config = {
   api: {
     bodyParser: false,

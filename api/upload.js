@@ -1,6 +1,6 @@
-import formidable from "formidable";
-import { google } from "googleapis";
-import fs from "fs/promises";
+const formidable = require("formidable");
+const { google } = require("googleapis");
+const fs = require("fs");
 
 export const config = {
   api: {
@@ -9,13 +9,11 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  console.log("📡 Received request to /api/upload");
-
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const form = new formidable.IncomingForm({ multiples: false });
+  const form = new formidable.IncomingForm();
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
@@ -30,36 +28,35 @@ export default async function handler(req, res) {
     }
 
     try {
-      const buffer = await fs.readFile(file.filepath);
+      const fileStream = fs.createReadStream(file.filepath);
 
       const auth = new google.auth.OAuth2(
         process.env.CLIENT_ID,
         process.env.CLIENT_SECRET
       );
-
-      auth.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+      auth.setCredentials({
+        refresh_token: process.env.REFRESH_TOKEN,
+      });
 
       const drive = google.drive({ version: "v3", auth });
 
-      console.log("📤 Uploading to Google Drive...");
-
-      const response = await drive.files.create({
+      const driveResponse = await drive.files.create({
         requestBody: {
           name: file.originalFilename,
           parents: [process.env.FOLDER_ID],
         },
         media: {
           mimeType: file.mimetype,
-          body: Buffer.from(buffer),
+          body: fileStream,
         },
       });
 
-      console.log("✅ Upload successful:", response.data.id);
-      return res.status(200).json({ success: true, fileId: response.data.id });
+      console.log("✅ Uploaded:", driveResponse.data.id);
+      return res.status(200).json({ success: true, fileId: driveResponse.data.id });
 
-    } catch (error) {
-      console.error("❌ Upload error:", error);
-      return res.status(500).json({ success: false, error: error.message });
+    } catch (uploadErr) {
+      console.error("❌ Upload failed:", uploadErr);
+      return res.status(500).json({ success: false, error: uploadErr.message });
     }
   });
 }

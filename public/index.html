@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Google Drive Uploader</title>
+  <meta charset="UTF-8">
+  <title>Drive Uploader</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 2rem; }
-    input, button { margin: 10px; padding: 10px; }
+    body { font-family: sans-serif; padding: 2em; }
+    #status { margin-top: 1em; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Upload File to Google Drive</h1>
+  <h1>Upload a File to Google Drive</h1>
   <form id="uploadForm">
-    <input type="file" id="fileInput" name="file" required />
+    <input type="file" name="file" required>
     <button type="submit">Upload</button>
   </form>
   <div id="status"></div>
@@ -20,34 +19,34 @@
   <script>
     document.getElementById("uploadForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const file = document.getElementById("fileInput").files[0];
-      const formData = new FormData();
-      formData.append("file", file);
-
-      document.getElementById("status").textContent = "Uploading...";
+      const formData = new FormData(e.target);
 
       try {
-  const res = await fetch("/api/upload", {
-    method: "POST",
-    body: formData
-  });
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData
+        });
 
-  let result;
-  try {
-    result = await res.json(); // This could still fail
-  } catch (jsonErr) {
-    throw new Error("Server response was not valid JSON");
-  }
+        const text = await res.text();
+        let result;
 
-  if (result.success) {
-    document.getElementById("status").textContent = `Upload successful! File ID: ${result.fileId}`;
-  } else {
-    document.getElementById("status").textContent = `Upload failed: ${result.error}`;
-  }
-} catch (err) {
-  console.error(err);
-  document.getElementById("status").textContent = "Upload failed!";
-}
+        try {
+          result = JSON.parse(text);
+        } catch (jsonErr) {
+          console.error("Invalid JSON:", text);
+          document.getElementById("status").textContent = "Upload failed: Invalid server response.";
+          return;
+        }
+
+        if (result.success) {
+          document.getElementById("status").textContent = `✅ Upload successful! File ID: ${result.fileId}`;
+        } else {
+          document.getElementById("status").textContent = `❌ Upload failed: ${result.error}`;
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        document.getElementById("status").textContent = "❌ Upload failed due to network error.";
+      }
     });
   </script>
 </body>
